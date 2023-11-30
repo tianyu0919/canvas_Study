@@ -67,5 +67,5 @@ ctx.stroke();
 
 ctx.beginPath();
 
-ctx.arc(300, 300, 50, 0, (Math.PI / 180) * 90, false);
+ctx.arc(300, 300, 50, 0, (Math.PI / 180) * 180, false);
 ctx.fill()
