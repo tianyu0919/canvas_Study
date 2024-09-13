@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Canvas Pie Chart with Hover Effect and Shadow</title>
+  <style>
+    #myCanvas {
+      border: 1px solid #000000;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="myCanvas" width="600" height="400"></canvas>
+  <script>
+    // 获取Canvas元素和上下文
+    const canvas = document.getElementById('myCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // 圆的属性
+    const circle = {
+      x: 300, // 圆心的x坐标
+      y: 200, // 圆心的y坐标
+      radius: 150 // 圆的半径
+    };
+
+    // 扇区数据
+    const sectors = [
+      { color: 'red', value: 30 },
+      { color: 'green', value: 70 },
+      { color: 'blue', value: 50 },
+      { color: 'yellow', value: 90 },
+      { color: 'purple', value: 120 }
+    ];
+
+    // 计算总值
+    const totalValue = sectors.reduce((sum, sector) => sum + sector.value, 0);
+
+    // 当前突显的扇区索引
+    let highlightedIndex = -1;
+    let targetRadius = circle.radius;
+    let currentRadius = circle.radius;
+
+    // 绘制饼图
+    function drawPieChart() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height); // 清空画布
+      let startAngle = 0;
+      sectors.forEach((sector, index) => {
+        const sectorAngle = (sector.value / totalValue) * 2 * Math.PI;
+        const gap = 0; // 间隙大小（弧度）
+
+        // 计算扇区的起始和结束角度，增加间隙
+        const adjustedStartAngle = startAngle + gap / 2;
+        const adjustedEndAngle = startAngle + sectorAngle - gap / 2;
+
+        // 突显效果
+        let radius = circle.radius;
+        let offsetX = 0;
+        let offsetY = 0;
+        if (index === highlightedIndex) {
+          radius = currentRadius; // 使用当前半径
+          const midAngle = (adjustedStartAngle + adjustedEndAngle) / 2;
+          offsetX = 10 * Math.cos(midAngle);
+          offsetY = 10 * Math.sin(midAngle);
+
+          // 设置阴影
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+          ctx.shadowBlur = 10;
+          ctx.shadowOffsetX = 5;
+          ctx.shadowOffsetY = 5;
+        } else {
+          // 清除阴影
+          ctx.shadowColor = 'transparent';
+        }
+
+        ctx.beginPath();
+        ctx.moveTo(circle.x + offsetX, circle.y + offsetY);
+        ctx.arc(circle.x + offsetX, circle.y + offsetY, radius, adjustedStartAngle, adjustedEndAngle);
+        ctx.closePath();
+        ctx.fillStyle = sector.color;
+        ctx.fill();
+        ctx.stroke();
+
+        startAngle += sectorAngle;
+      });
+    }
+
+    // 动画函数
+    function animate() {
+      const step = 2; // 每帧增加的半径
+      if (currentRadius < targetRadius) {
+        currentRadius += step;
+        if (currentRadius > targetRadius) {
+          currentRadius = targetRadius;
+        }
+      } else if (currentRadius > targetRadius) {
+        currentRadius -= step;
+        if (currentRadius < targetRadius) {
+          currentRadius = targetRadius;
+        }
+      }
+
+      drawPieChart();
+      requestAnimationFrame(animate);
+    }
+
+    // 检测鼠标是否在某个扇区内
+    function getSectorIndex(mouseX, mouseY) {
+      const dx = mouseX - circle.x;
+      const dy = mouseY - circle.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance > circle.radius) {
+        return -1; // 鼠标不在圆内
+      }
+
+      let angle = Math.atan2(dy, dx);
+      if (angle < 0) {
+        angle += 2 * Math.PI;
+      }
+
+      let startAngle = 0;
+      for (let i = 0; i < sectors.length; i++) {
+        const sectorAngle = (sectors[i].value / totalValue) * 2 * Math.PI;
+        const gap = 0.02; // 间隙大小（弧度）
+
+        // 计算扇区的起始和结束角度，增加间隙
+        const adjustedStartAngle = startAngle + gap / 2;
+        const adjustedEndAngle = startAngle + sectorAngle - gap / 2;
+
+        if (angle >= adjustedStartAngle && angle < adjustedEndAngle) {
+          return i;
+        }
+        startAngle += sectorAngle;
+      }
+
+      return -1; // 未找到匹配的扇区
+    }
+
+    // 监听鼠标移动事件
+    canvas.addEventListener('mousemove', (event) => {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = event.clientX - rect.left;
+      const mouseY = event.clientY - rect.top;
+
+      const sectorIndex = getSectorIndex(mouseX, mouseY);
+      if (sectorIndex !== highlightedIndex) {
+        highlightedIndex = sectorIndex;
+        targetRadius = sectorIndex === -1 ? circle.radius : circle.radius + 10;
+      }
+    });
+
+    // 开始动画
+    animate();
+
+    // 初始绘制
+    drawPieChart();
+  </script>
+</body>
+
+</html>

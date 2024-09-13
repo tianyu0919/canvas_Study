@@ -1,0 +1,99 @@
+<!--
+ * @Author: 卢天宇
+ * @Date: 2024-09-13 18:00:40
+ * @Description: 
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas Pie Chart Mouse Detection</title>
+</head>
+<body>
+    <canvas id="myCanvas" width="600" height="400" style="border:1px solid #000000;"></canvas>
+    <script>
+        // 获取Canvas元素和上下文
+        const canvas = document.getElementById('myCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 圆的属性
+        const circle = {
+            x: 300, // 圆心的x坐标
+            y: 200, // 圆心的y坐标
+            radius: 150 // 圆的半径
+        };
+
+        // 扇区数据
+        const sectors = [
+            { color: 'red', value: 30 },
+            { color: 'green', value: 70 },
+            { color: 'blue', value: 50 },
+            { color: 'yellow', value: 90 },
+            { color: 'purple', value: 120 }
+        ];
+
+        // 计算总值
+        const totalValue = sectors.reduce((sum, sector) => sum + sector.value, 0);
+
+        // 绘制饼图
+        function drawPieChart() {
+            let startAngle = 0;
+            sectors.forEach(sector => {
+                const sectorAngle = (sector.value / totalValue) * 2 * Math.PI;
+                ctx.beginPath();
+                ctx.moveTo(circle.x, circle.y);
+                ctx.arc(circle.x, circle.y, circle.radius, startAngle, startAngle + sectorAngle);
+                ctx.closePath();
+                ctx.fillStyle = sector.color;
+                ctx.fill();
+                startAngle += sectorAngle;
+            });
+        }
+
+        // 检测鼠标是否在某个扇区内
+        function getSectorIndex(mouseX, mouseY) {
+            const dx = mouseX - circle.x;
+            const dy = mouseY - circle.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance > circle.radius) {
+                return -1; // 鼠标不在圆内
+            }
+
+            let angle = Math.atan2(dy, dx);
+            if (angle < 0) {
+                angle += 2 * Math.PI;
+            }
+
+            let startAngle = 0;
+            for (let i = 0; i < sectors.length; i++) {
+                const sectorAngle = (sectors[i].value / totalValue) * 2 * Math.PI;
+                if (angle >= startAngle && angle < startAngle + sectorAngle) {
+                    return i;
+                }
+                startAngle += sectorAngle;
+            }
+
+            return -1; // 未找到匹配的扇区
+        }
+
+        // 监听鼠标移动事件
+        canvas.addEventListener('mousemove', (event) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = event.clientX - rect.left;
+            const mouseY = event.clientY - rect.top;
+
+            const sectorIndex = getSectorIndex(mouseX, mouseY);
+            if (sectorIndex !== -1) {
+                console.log(`Mouse is inside sector ${sectorIndex + 1} (${sectors[sectorIndex].color})`);
+            } else {
+                console.log('Mouse is outside the pie chart');
+            }
+        });
+
+        // 初始绘制
+        drawPieChart();
+    </script>
+</body>
+</html>
